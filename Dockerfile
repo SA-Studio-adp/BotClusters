@@ -6,7 +6,7 @@ RUN chmod +x /usr/local/bin/install.sh
 RUN /usr/local/bin/install.sh
 
 COPY requirements.txt ./
-RUN echo "supervisor" >> requirements.tx
+RUN echo "supervisor" >> requirements.txt
 RUN pip3 install --no-cache-dir -r requirements.txt
 COPY . .
 
