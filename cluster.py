@@ -7,8 +7,27 @@ def run_update():
     subprocess.run(["python3", "update.py"])
 
 def run_gunicorn():
-    port = os.environ.get("PORT", 5000)
-    subprocess.run(["gunicorn", "-w", "1", "-k", "eventlet", "-b", f"0.0.0.0:{os.environ.get('PORT', '5000')}", "run:app"], check=True)
+    port = os.environ.get("PORT", "5000")
+
+    # Prefer eventlet when available (required by Flask-SocketIO async_mode='eventlet').
+    # Fall back to gthread so health checks can still pass if eventlet is missing.
+    worker_class = "eventlet"
+    try:
+        import eventlet  # noqa: F401
+    except Exception:
+        worker_class = "gthread"
+        print("[cluster.py] eventlet not available; falling back to gunicorn gthread worker.")
+
+    subprocess.run([
+        "gunicorn",
+        "-w",
+        "1",
+        "-k",
+        worker_class,
+        "-b",
+        f"0.0.0.0:{port}",
+        "run:app",
+    ], check=True)
 
 def run_supervisord():
     subprocess.run(["supervisord", "-n", "-c", "supervisord.conf"])
